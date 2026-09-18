@@ -32,6 +32,9 @@ export default function AdminPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pw, setPw] = useState({ old_password: "", new_password: "" });
+  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => {
     const t = localStorage.getItem("brandrise_token");
@@ -77,6 +80,34 @@ export default function AdminPage() {
   const logout = () => {
     localStorage.removeItem("brandrise_token");
     router.replace("/login");
+  };
+
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) return;
+    setPwMsg(null);
+    setPwLoading(true);
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(pw),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPwMsg({ ok: false, text: data.detail || "Failed" });
+        return;
+      }
+      setPwMsg({ ok: true, text: data.message || "Password updated" });
+      setPw({ old_password: "", new_password: "" });
+    } catch {
+      setPwMsg({ ok: false, text: "API se connection fail hua" });
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   return (
@@ -131,6 +162,45 @@ export default function AdminPage() {
             {error}
           </div>
         )}
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900">Change Password</h2>
+          <form onSubmit={changePassword} className="mt-4 grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
+            <input
+              type="password"
+              required
+              placeholder="Old password"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+              value={pw.old_password}
+              onChange={(e) => setPw({ ...pw, old_password: e.target.value })}
+            />
+            <input
+              type="password"
+              required
+              minLength={8}
+              placeholder="New password (8+ chars)"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+              value={pw.new_password}
+              onChange={(e) => setPw({ ...pw, new_password: e.target.value })}
+            />
+            <button
+              type="submit"
+              disabled={pwLoading}
+              className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+            >
+              {pwLoading ? "Saving..." : "Update"}
+            </button>
+          </form>
+          {pwMsg && (
+            <p
+              className={`mt-3 text-sm font-medium ${
+                pwMsg.ok ? "text-emerald-600" : "text-rose-600"
+              }`}
+            >
+              {pwMsg.text}
+            </p>
+          )}
+        </div>
 
         <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           {loading ? (

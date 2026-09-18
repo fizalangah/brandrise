@@ -1,4 +1,7 @@
+import hashlib
+import hmac
 import os
+import secrets
 import sqlite3
 import time
 import uuid
@@ -17,8 +20,9 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 JWT_SECRET = os.environ.get("JWT_SECRET", "brandrise-super-secret-change-me")
 JWT_ALGO = "HS256"
 TOKEN_TTL_DAYS = 7
+PBKDF2_ITERATIONS = 210_000
 
-app = FastAPI(title="BrandRise API", version="1.0.0")
+app = FastAPI(title="BrandRise API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,6 +58,46 @@ def init_db():
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY,
+                password_hash TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )
+            """
+        )
+        seed_admin(conn)
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode(), bytes.fromhex(salt), PBKDF2_ITERATIONS
+    ).hex()
+    return f"pbkdf2_sha256${PBKDF2_ITERATIONS}${salt}${digest}"
+
+
+def verify_password(password: str, stored: str) -> bool:
+    try:
+        algo, iterations, salt, digest = stored.split("$")
+        if algo != "pbkdf2_sha256":
+            return False
+        check = hashlib.pbkdf2_hmac(
+            "sha256", password.encode(), bytes.fromhex(salt), int(iterations)
+        ).hex()
+        return hmac.compare_digest(check, digest)
+    except (ValueError, TypeError):
+        return False
+
+
+def seed_admin(conn):
+    count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    if count == 0:
+        conn.execute(
+            "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
+            (ADMIN_USERNAME, hash_password(ADMIN_PASSWORD), int(time.time() * 1000)),
+        )
 
 
 init_db()
@@ -85,6 +129,11 @@ class LoginOut(BaseModel):
     expires_at: int
 
 
+class ChangePasswordIn(BaseModel):
+    old_password: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 @app.get("/api/health")
 def health():
     return {"ok": True, "service": "brandrise-api"}
@@ -111,7 +160,12 @@ def create_lead(lead: LeadIn):
 
 @app.post("/api/auth/login", response_model=LoginOut)
 def login(creds: LoginIn):
-    if creds.username != ADMIN_USERNAME or creds.password != ADMIN_PASSWORD:
+    with db_conn() as conn:
+        row = conn.execute(
+            "SELECT username, password_hash FROM users WHERE username = ?",
+            (creds.username.strip(),),
+        ).fetchone()
+    if not row or not verify_password(creds.password, row["password_hash"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
@@ -119,7 +173,7 @@ def login(creds: LoginIn):
         (datetime.now(timezone.utc) + timedelta(days=TOKEN_TTL_DAYS)).timestamp()
     )
     token = jwt.encode(
-        {"sub": creds.username, "exp": expires_at},
+        {"sub": row["username"], "exp": expires_at},
         JWT_SECRET,
         algorithm=JWT_ALGO,
     )
@@ -145,6 +199,27 @@ def auth_dep(authorization: str | None = Header(default=None)) -> str:
     return require_auth(authorization)
 
 
+@app.post("/api/auth/change-password")
+def change_password(
+    payload: ChangePasswordIn, username: str = Depends(auth_dep)
+):
+    with db_conn() as conn:
+        row = conn.execute(
+            "SELECT username, password_hash FROM users WHERE username = ?",
+            (username,),
+        ).fetchone()
+        if not row or not verify_password(payload.old_password, row["password_hash"]):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Old password is incorrect",
+            )
+        conn.execute(
+            "UPDATE users SET password_hash = ? WHERE username = ?",
+            (hash_password(payload.new_password), username),
+        )
+    return {"ok": True, "message": "Password updated"}
+
+
 @app.get("/api/leads", response_model=list[LeadOut])
 def list_leads(_: str = Depends(auth_dep)):
     with db_conn() as conn:
@@ -158,6 +233,13 @@ def lead_stats(_: str = Depends(auth_dep)):
         total = conn.execute("SELECT COUNT(*) FROM leads").fetchone()[0]
         today = conn.execute(
             "SELECT COUNT(*) FROM leads WHERE created_at > ?",
-            (int(datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()) * 1000,),
+            (
+                int(
+                    datetime.now(timezone.utc)
+                    .replace(hour=0, minute=0, second=0, microsecond=0)
+                    .timestamp()
+                )
+                * 1000,
+            ),
         ).fetchone()[0]
     return {"total": total, "today": today}
