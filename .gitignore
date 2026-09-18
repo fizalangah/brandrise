@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# env files
+.env
+.env*.local
+
+# backend
+backend/venv/
+backend/__pycache__/
+backend/brandrise.db
+backend/brandrise.db-*
+*.pyc
+
+# misc
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
