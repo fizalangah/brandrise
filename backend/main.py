@@ -18,6 +18,7 @@ DB_URL = os.environ.get("BRANDRISE_DB", os.path.join(BASE_DIR, "brandrise.db"))
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 JWT_SECRET = os.environ.get("JWT_SECRET", "brandrise-super-secret-change-me")
+RESET_KEY = os.environ.get("BRANDRISE_RESET_KEY", "change-me-reset-key")
 JWT_ALGO = "HS256"
 TOKEN_TTL_DAYS = 7
 PBKDF2_ITERATIONS = 210_000
@@ -190,6 +191,12 @@ class ChangePasswordIn(BaseModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class ResetPasswordIn(BaseModel):
+    username: str = Field(min_length=1, max_length=120)
+    reset_key: str = Field(min_length=4, max_length=200)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 @app.get("/api/health")
 def health():
     return {
@@ -276,6 +283,28 @@ def change_password(payload: ChangePasswordIn, username: str = Depends(auth_dep)
             (hash_password(payload.new_password), username),
         )
     return {"ok": True, "message": "Password updated"}
+
+
+@app.post("/api/auth/reset-password")
+def reset_password(payload: ResetPasswordIn):
+    if not hmac.compare_digest(payload.reset_key, RESET_KEY):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid reset key"
+        )
+    with DB(DB_URL) as db:
+        row = db.one(
+            "SELECT username FROM users WHERE username = ?",
+            (payload.username.strip(),),
+        )
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+        db.execute(
+            "UPDATE users SET password_hash = ? WHERE username = ?",
+            (hash_password(payload.new_password), payload.username.strip()),
+        )
+    return {"ok": True, "message": "Password reset. Login with your new password."}
 
 
 @app.get("/api/leads", response_model=list[LeadOut])

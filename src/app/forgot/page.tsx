@@ -3,30 +3,44 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+export default function ForgotPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [resetKey, setResetKey] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setMessage("");
+
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setError("Password at least 8 characters long hona chahiye.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, reset_key: resetKey, new_password: newPassword }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.detail || "Login failed");
+        setError(data.detail || "Reset failed");
         return;
       }
-      localStorage.setItem("brandrise_token", data.token);
-      router.push("/admin");
+      setMessage(data.message || "Password reset. Now login.");
+      setTimeout(() => router.push("/login"), 1500);
     } catch {
       setError("Backend se connection fail hua. API chal rahi hai?");
     } finally {
@@ -42,10 +56,10 @@ export default function LoginPage() {
             B
           </span>
           <h1 className="mt-4 text-2xl font-extrabold text-slate-900">
-            BrandRise Admin
+            Reset Password
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Login to view your leads
+            Forgot your admin password? Reset it with your secret key.
           </p>
         </div>
 
@@ -67,15 +81,44 @@ export default function LoginPage() {
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Password
+              Secret Reset Key
+              <span className="ml-1 text-xs font-normal text-slate-400">
+                (BRANDRISE_RESET_KEY env)
+              </span>
+            </label>
+            <input
+              required
+              type="password"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+              placeholder="••••••••••••"
+              value={resetKey}
+              onChange={(e) => setResetKey(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              New Password (min 8)
             </label>
             <input
               required
               type="password"
               className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Confirm New Password
+            </label>
+            <input
+              required
+              type="password"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
 
@@ -84,27 +127,28 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+          {message && (
+            <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-600">
+              {message}
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:opacity-90 disabled:opacity-50"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Resetting..." : "Reset Password"}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <p className="mt-6 text-center text-sm">
           <a
-            href="/forgot"
+            href="/login"
             className="text-xs font-medium text-violet-600 transition hover:text-violet-700 hover:underline"
           >
-            Forgot password?
+            Back to login
           </a>
-        </div>
-
-        <p className="mt-4 text-center text-xs text-slate-400">
-          Default: admin / admin123 — production mein change karein.
         </p>
       </div>
     </main>
