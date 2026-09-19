@@ -4,13 +4,17 @@ const projects = [
     category: "Restaurant · Website + WhatsApp Ordering",
     gradient: "from-amber-500 via-orange-500 to-rose-500",
     initials: "GB",
-    points: ["Menu + gallery", "WhatsApp order button", "Google Maps embed"],
+    url: "https://fizalangah.github.io/golden-bites/",
+    demo: true,
+    points: ["Menu + gallery", "WhatsApp order button", "Mobile-first design"],
   },
   {
     name: "Glow & Grace Salon",
     category: "Beauty · Booking + Automation",
     gradient: "from-pink-500 via-fuchsia-500 to-violet-500",
     initials: "GG",
+    url: "#contact",
+    demo: true,
     points: ["Service pricing", "Book Now → WhatsApp", "Review showcase"],
   },
   {
@@ -18,6 +22,8 @@ const projects = [
     category: "Coaching · Lead Capture + AI Chatbot",
     gradient: "from-sky-500 via-blue-500 to-indigo-500",
     initials: "BM",
+    url: "#contact",
+    demo: true,
     points: ["Course catalog", "Enquiry form → email", "AI chatbot FAQs"],
   },
 ];
@@ -43,7 +49,9 @@ export default function Portfolio() {
           {projects.map((p) => (
             <a
               key={p.name}
-              href="#contact"
+              href={p.url}
+              target={p.url.startsWith("#") ? undefined : "_blank"}
+              rel={p.url.startsWith("#") ? undefined : "noopener noreferrer"}
               className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
             >
               <div
@@ -56,7 +64,7 @@ export default function Portfolio() {
                 </div>
                 <span className="text-5xl font-black text-white/90">{p.initials}</span>
                 <span className="absolute bottom-3 right-4 rounded-full bg-white/25 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
-                  Live Preview ↗
+                  {p.url.startsWith("#") ? "Sample ↗" : "Live Preview ↗"}
                 </span>
               </div>
               <div className="p-5">
