@@ -10,12 +10,12 @@ const projects = [
   },
   {
     name: "Glow & Grace Salon",
-    category: "Beauty · Booking + Automation",
+    category: "Beauty · Multi-page · Booking + AI Chatbot",
     gradient: "from-pink-500 via-fuchsia-500 to-violet-500",
     initials: "GG",
-    url: "#contact",
+    url: "https://fizalangah.github.io/glow-grace/",
     demo: true,
-    points: ["Service pricing", "Book Now → WhatsApp", "Review showcase"],
+    points: ["Multi-page site (3 pages)", "Booking form → lead inbox", "WhatsApp auto-reply chatbot"],
   },
   {
     name: "Bright Minds Academy",
