@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import PasswordInput from "@/components/PasswordInput";
 
 type Lead = {
   id: string;
@@ -166,20 +167,16 @@ export default function AdminPage() {
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900">Change Password</h2>
           <form onSubmit={changePassword} className="mt-4 grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
-            <input
-              type="password"
-              required
+            <PasswordInput
               placeholder="Old password"
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+              required
               value={pw.old_password}
               onChange={(e) => setPw({ ...pw, old_password: e.target.value })}
             />
-            <input
-              type="password"
+            <PasswordInput
+              placeholder="New password (8+ chars)"
               required
               minLength={8}
-              placeholder="New password (8+ chars)"
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
               value={pw.new_password}
               onChange={(e) => setPw({ ...pw, new_password: e.target.value })}
             />

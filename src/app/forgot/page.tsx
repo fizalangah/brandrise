@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function ForgotPage() {
   const router = useRouter();
@@ -80,43 +81,29 @@ export default function ForgotPage() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Secret Reset Key
-              <span className="ml-1 text-xs font-normal text-slate-400">
-                (BRANDRISE_RESET_KEY env)
-              </span>
-            </label>
-            <input
-              required
-              type="password"
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+            <PasswordInput
+              label="Secret Reset Key"
+              hint="(BRANDRISE_RESET_KEY env)"
               placeholder="••••••••••••"
+              required
               value={resetKey}
               onChange={(e) => setResetKey(e.target.value)}
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              New Password (min 8)
-            </label>
-            <input
-              required
-              type="password"
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+            <PasswordInput
+              label="New Password (min 8)"
               placeholder="••••••••"
+              required
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Confirm New Password
-            </label>
-            <input
-              required
-              type="password"
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+            <PasswordInput
+              label="Confirm New Password"
               placeholder="••••••••"
+              required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />

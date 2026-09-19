@@ -1,0 +1,67 @@
+"use client";
+
+import { useState } from "react";
+
+const EyeIcon = ({ off }: { off?: boolean }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    {off ? (
+      <>
+        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+        <line x1="2" x2="22" y1="2" y2="22" />
+      </>
+    ) : (
+      <>
+        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+        <circle cx="12" cy="12" r="3" />
+      </>
+    )}
+  </svg>
+);
+
+interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  hint?: string;
+}
+
+export default function PasswordInput({ label, hint, className = "", ...props }: PasswordInputProps) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div>
+      {label && (
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {label}
+          {hint && <span className="ml-1 text-xs font-normal text-slate-400">{hint}</span>}
+        </label>
+      )}
+      <div className="relative">
+        <input
+          {...props}
+          type={visible ? "text" : "password"}
+          className={`w-full rounded-xl border border-slate-300 bg-white px-4 py-3 pr-11 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200 ${className}`}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label={visible ? "Hide password" : "Show password"}
+          onClick={() => setVisible((v) => !v)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+        >
+          <EyeIcon off={visible} />
+        </button>
+      </div>
+    </div>
+  );
+}
