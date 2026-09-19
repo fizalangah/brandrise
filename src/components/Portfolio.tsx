@@ -19,12 +19,12 @@ const projects = [
   },
   {
     name: "Bright Minds Academy",
-    category: "Coaching · Lead Capture + AI Chatbot",
+    category: "Coaching · Multi-page · AI Chatbot + Bookings",
     gradient: "from-sky-500 via-blue-500 to-indigo-500",
     initials: "BM",
-    url: "#contact",
+    url: "https://fizalangah.github.io/bright-minds/",
     demo: true,
-    points: ["Course catalog", "Enquiry form → email", "AI chatbot FAQs"],
+    points: ["Multi-page site (3 pages)", "24/7 AI chatbot (fees/timings)", "Demo-class booking + Maps embed"],
   },
 ];
 
